@@ -1,0 +1,550 @@
+;;;; -*-lisp-*-
+;;;; .stumpwnrc ----- Stumpwm Config
+;;;;
+;;;; TODO
+;;;; attempt to kill box ---> need to hack source
+;;;; hook called when key under *top-map* is pressed
+;;;; (remove-hook, *key-press-hook*, fn)
+;;;; input.lisp ---> file to check out
+;;;; (stumpwm:run-commands "defwaitcursor 0") ---> ratpoison not stump fix later
+(in-package :stumpwm)
+
+;;;; General
+(setf *startup-message* "Demo Real")
+(setf *timeout-wait* 1)
+(setf *focus-window-hook* nil)
+(setf *suppress-frame-indicator* t)
+
+;;; macro for faster startups
+(defmacro replace-hook (hook fn)
+  `(remove-hook, hook, fn)
+  `(add-hook, hook, fn))
+
+;;; Apperance
+;; font for message-window
+(set-font "-*-terminus-bold-r-*-*-9*")
+;; Minimalistic / Elegant
+(setf *window-border-style* "none")
+(setf *maxsize-border-width* 0)
+(setf *transient-border-width* 0)
+(setf *normal-border-width* 0)
+(set-focus-color "black")
+(set-unfocus-color "black")
+(set-border-color "black")
+(set-float-focus-color "black")
+(set-win-bg-color "black")
+(set-fg-color "green")
+(set-bg-color "black")
+(set-msg-border-width 0)
+(set-frame-outline-width 0)
+
+; placement of stumpwm input and message bar
+(setf *input-window-gravity* :bottom-left)
+(setf *message-window-gravity* :bottom-left)
+; (setf *message-window-padding* 0)
+;; The minimum possible frame resize
+(setf *min-frame-width* 1)
+(setf *min-frame-height* 1)
+;(setf *mode-line-pad-x* 0)
+
+;;; Prefix key --> Hardly Used --> Box around mouse
+(set-prefix-key (kbd "M-H-C-t"))
+
+;; set black root background for xcompmgr TODO put in xinit
+(stumpwm:run-shell-command "hsetroot -solid #000000")
+
+;;;                                       
+;;; * RAT -----------------------;        ?^^^^^^?
+;;;                              ;    _____\ | |/
+;;; Rat Trap --> Not Dead Yet    ;   /\___//\__/
+(setf *mouse-focus-policy* :ignore);   |_ |_
+(define-key *top-map* (kbd "H-x")
+  "exec xinput --set-prop 12 \"Synaptics Finger\" 20 20 20")
+(define-key *top-map* (kbd "H-X")
+  "exec xinput --set-prop 12 \"Synaptics Finger\" 100 100 100")
+;; hides mouse when activated
+(stumpwm:run-shell-command "unclutter -idle 1 -jitter 2 -root")
+;; Hide and 'disable' mouse at startup
+(stumpwm:run-shell-command
+ "xinput --set-prop 12 \"Synaptics Finger\" 100 100 100")
+;;Banish mouse at startup
+(stumpwm:run-commands  "banish")
+(stumpwm:run-shell-command
+ "xsetroot -cursor_name left_ptr -fg 'black' -bg 'black'")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,	 ---------
+; Function: make-sparse-keymap         \         \  O O	 /    ,
+; creates an empty keymap       	\---------\  @ 	/----*@'
+;; Stops pinky pain on laptop       		   \___/     ' `
+(defvar *rat-map*
+  (let (( q (stumpwm:make-sparse-keymap)))
+    (stumpwm:define-key q (stumpwm:kbd "1")
+                        "exec xbindkeys -f  ~/keys/xbindkeysrc1")
+;;    (stumpwm:define-key q (stumpwm:kbd "2")
+;;     "exec killall xbindkeys && exec xbindkeys -f ~/keys/xbindkeysrc2")
+;;   (stumpwm:define-key q (stumpwm:kbd "3")
+;;                        "exec killall xbindkeys &&
+;;exec xbindkeys -f ~/keys/xbindkeysrc3")
+    (stumpwm:define-key q (stumpwm:kbd "q") "exec killall xbindkeys")
+    q
+    ))
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "H-q")
+                    '*rat-map*) ;box shows up
+;; Keymap modes
+(define-key *top-map* (kbd "M-H-DEL") "xmodmap ~/.keys/switch1")
+
+;;; * GROUPS
+;
+;;; switching groups
+(define-key *top-map* (kbd "M-H-1") "gselect 1")
+(define-key *top-map* (kbd "M-H-2") "gselect 2")
+(define-key *top-map* (kbd "M-H-3") "gselect 3")
+(define-key *top-map* (kbd "M-H-4") "gselect 4")
+(define-key *top-map* (kbd "M-H-5") "gselect 5")
+(define-key *top-map* (kbd "M-H-6") "gselect 6")
+(define-key *top-map* (kbd "M-H-7") "gselect 7")
+(define-key *top-map* (kbd "M-H-8") "gselect 8")
+(define-key *top-map* (kbd "M-H-9") "gselect 9")
+
+;;  (define-key *top-map*
+;;    (kbd "M-H-1") "gselect 1"
+;;    (kbd "M-H-2") "gselect 2"
+;;    (kbd "M-H-3") "gselect 3")
+             
+
+;;; groups
+(define-key *top-map* (kbd "M-SPC") "gnext")
+(define-key *top-map* (kbd "M-DEL") "gprev")
+
+;; bring window to next group
+(define-key *top-map* (kbd "M-S-SPC") "gnext-with-window")
+(define-key *top-map* (kbd "M-S-DEL") "gprev-with-window")
+
+;                         ?/^^^\?        _______
+;;; Frames and Windows    | ^ ^ |       /      /|
+;                          \ ' /       /-----\/ |    <------- WINDOWS  
+;                        --/| |\------/  0  0 \ | 
+;                          _/ \________________\| 
+;; change frame focus                  
+(define-key *top-map* (kbd "M-p") "move-focus up")
+(define-key *top-map* (kbd "M-n") "move-focus down")
+(define-key *top-map* (kbd "M-b") "move-focus left")
+(define-key *top-map* (kbd "M-f") "move-focus right")
+;; change frame focus with window emacs style
+(define-key *top-map* (kbd "M-P") "move-window up")
+(define-key *top-map* (kbd "M-N") "move-window down")
+(define-key *top-map* (kbd "M-B") "move-window left")
+(define-key *top-map* (kbd "M-F") "move-window right")
+;; change focus with current window Arrow Keys
+(define-key *top-map* (kbd "M-Up") "move-window up")
+(define-key *top-map* (kbd "M-Down") "move-window down")
+(define-key *top-map* (kbd "M-Left") "move-window left")
+(define-key *top-map* (kbd "M-Right") "move-window right")
+;; exchange current window with window in specified direction
+(define-key *top-map* (kbd "M-C-f") "exchange-direction right")
+(define-key *top-map* (kbd "M-C-b") "exchange-direction left")
+(define-key *top-map* (kbd "M-C-n") "exchange-direction down")
+(define-key *top-map* (kbd "M-C-p") "exchange-direction up")
+
+;; cycles through frames                             <----------- TODO
+(define-key *top-map* (kbd "M-h") "prev-in-frame")
+(define-key *top-map* (kbd "M-l") "next-in-frame")
+(define-key *top-map* (kbd "M-j") "next")
+(define-key *top-map* (kbd "M-k") "prev")
+;(define-key *top-map* (kbd "H-n") "pull-hidden-next")
+;(define-key *top-map* (kbd "H-SPC") "pull-hidden-next")
+;; jumps to the last frame
+(define-key *top-map* (kbd "M-o") "fother")
+;(define-key *top-map* (kbd "M-o") "fnext")
+;; frame construction
+(define-key *top-map* (kbd "M-s") "vsplit")
+(define-key *top-map* (kbd "M-S") "hsplit")
+(define-key *top-map* (kbd "M-r") "iresize")
+(define-key *top-map* (kbd "M-R") "remove")
+
+;(define-key *top-map* (kbd "H-Up") "pull-hidden-next")
+;(define-key *top-map* (kbd "H-Down") "pull-hidden-previous")
+;(define-key *top-map* (kbd "H-Right") "next")
+;(define-key *top-map* (kbd "H-Left") "prev")
+;;
+;; Make M control in Frame TODO work on this LATER
+;(define-key *top-map* (kbd "M-Up") "next-in-frame")
+;(define-key *top-map* (kbd "M-Down") "prev-in-frame")
+
+;;switches focus bringing window in the specified direction
+;(define-key *top-map* (kbd "M-S-Up") "move-window up")
+;(define-key *top-map* (kbd "M-S-Down") "move-window down")
+;(define-key *top-map* (kbd "M-S-Left") "move-window left")
+;(define-key *top-map* (kbd "M-S-Right") "move-window right")
+;;switches focus bringing window in the specified direction
+;;cycles through frames with window
+;;(define-key *top-map* (kbd "M-O") "fnext")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                          ; full size keyboard I would do differently
+;;; transparency settings  ; on my laptop this makes sense
+;                          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-key *top-map* (kbd "H-t") "exec xcompmgr -Ff &")
+(define-key *top-map* (kbd "H-1") "exec transset-df .1 -a")
+(define-key *top-map* (kbd "H-2") "exec transset-df .2 -a")
+(define-key *top-map* (kbd "H-3") "exec transset-df .3 -a")
+(define-key *top-map* (kbd "H-4") "exec transset-df .4 -a")
+(define-key *top-map* (kbd "H-5") "exec transset-df .5 -a")
+(define-key *top-map* (kbd "H-6") "exec transset-df .6 -a")
+(define-key *top-map* (kbd "H-7") "exec transset-df .7 -a")
+(define-key *top-map* (kbd "H-8") "exec transset-df .8 -a")
+(define-key *top-map* (kbd "H-9") "exec transset-df .9 -a")
+;
+(define-key *top-map* (kbd "M-t") "exec xcompmgr -F &")
+(define-key *top-map* (kbd "M-1") "exec transset-df .1 -a")
+(define-key *top-map* (kbd "M-2") "exec transset-df .2 -a")
+(define-key *top-map* (kbd "M-3") "exec transset-df .3 -a")
+(define-key *top-map* (kbd "M-4") "exec transset-df .4 -a")
+(define-key *top-map* (kbd "M-5") "exec transset-df .5 -a")
+(define-key *top-map* (kbd "M-6") "exec transset-df .6 -a")
+(define-key *top-map* (kbd "M-7") "exec transset-df .7 -a")
+(define-key *top-map* (kbd "M-8") "exec transset-df .8 -a")
+(define-key *top-map* (kbd "M-9") "exec transset-df .9 -a")
+
+;(define-key *top-map* (kbd "M-DEL") "exec transset-df 0 -at")
+(define-key *top-map* (kbd "M-ESC") "exec transset-df 0 -at")
+;(define-key *top-map* (kbd "H-Delete") "exec transset-df  1 -a")
+;(define-key *top-map* (kbd "H-DEL") "exec transset-df 0 -at")
+(define-key *top-map* (kbd "H-ESC") "exec transset-df 0 -at")
+
+;;Increase by small inc
+(define-key *top-map* (kbd "M-=") "exec transset-df --inc .005 -a")
+(define-key *top-map* (kbd "M--") "exec transset-df --dec .005 -a")
+;;Increase by small inc
+(define-key *top-map* (kbd "H-=") "exec transset-df --inc .005 -a")
+(define-key *top-map* (kbd "H--") "exec transset-df --dec .005 -a")
+;
+(define-key *top-map* (kbd "M-T") "exec killall xcompmgr")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Aplications
+(define-key *top-map* (kbd "H-C") "exec xterm")
+(define-key *top-map* (kbd "H-c") "exec xterm -uc -bc")
+(define-key *top-map* (kbd "M-c") "xterm")
+(define-key *top-map* (kbd "H-g") "exec conkeror")
+(define-key *top-map* (kbd "H-e") "emacs")
+(define-key *top-map* (kbd "M-e") "emacs")
+;(define-key *top-map* (kbd "M-t") "exec xterm -e xmodmap")
+(define-key *top-map* (kbd "H-m") "exec xterm -e alsamixer")
+(define-key *top-map* (kbd "H-a") "time")
+(define-key *top-map* (kbd "H-k") "kill")
+(define-key *top-map* (kbd "H-;") "colon")
+(define-key *top-map* (kbd "M-;") "colon")
+(define-key *top-map* (kbd "H-b") "banish")
+(define-key *top-map* (kbd "H-!") "exec")
+;; Aplications using Meta key
+(define-key *top-map* (kbd "M-m") "menu")
+;(define-key *root-map* (kbd "a") "date")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;temp custom opens zathura with text book
+;;(define-key *root-map* (kbd "z") "exec zathura /home/pat/work/op20/SwanLake29.pdf")
+;
+;
+;;just for testing;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-key *top-map* (kbd "H-DEL") "exec mplayer  ~/vids/SwanLakeFinale.flv")
+(define-key *top-map* (kbd "H-Delete") "exec mplayer  ~/vids/swan.mp4")
+;; take a screenshot of the screen (using PrtSc)
+(define-key *top-map* (kbd "M-Print")
+  "exec import -window root png:$HOME/pics/screenshots/screenshot_$(date +%F_%H-%M-%S).png")
+(define-key *top-map* (kbd "H-i")
+  "exec import -window root png:$HOME/pics/screenshots/screenshot_$(date +%F_%H-%M-%S).png")
+;; start webcam
+(define-key *top-map* (kbd "M-H-SPC")
+;;"exec mplayer tv:// -tv driver=v4l2:width=640:height=480:device=/dev/video0 -fps 60 -vf screenshot & sleep 1s && transset-df .5 -a")
+  "exec mplayer tv:// -tv driver=v4l2:width=640:height=480:device=/dev/video0 -fps 60 -vf screenshot")
+
+;; take a screenshot of the screen (using PrtSc)
+;; (define-key *top-map* (kbd "H-  "exec import -window root png:$HOME/pics/screenshots/screenshot_$(date +%F_%H-%M-%S).png")
+;; start
+;; (define-key *top-map* (kbd "H-Insert")
+;; "exec mplayer tv:// -tv driver=v4l2:width=640:height=480:device=/dev/video0 -fps 60 -vf screenshot & sleep 1s && transset-df .5 -a")
+;; "exec mplayer tv:// -tv driver=v4l2:width=640:height=480:device=/dev/video0 -fps 60 -vf screenshot")
+
+;;;; Key Bindings
+;;;
+;; mostly default remaped to Hyper (no more annoying box) need to fix for real in source
+;;;;                                                                                 ?^^^^^^?
+;;;;                                                                                  \ OO /
+;;;;                                                                                   \  /       /----\
+;;;;                                                                                  /|  |\     / 0  0 \
+;;;;                                                                                 / |__| \---/  ----  \
+;-----------------------------------------------------------------------------------/  _/\_    |--|----|--|--->
+;                                                                                                 |    |
+;(define-key *root-map* (kbd "M")                                                                 \_   \_
+;            "exec mplayer mntsdhc/vids/ballet/swanLakeFull.mp4 -ss 200")
+;(define-key *root-map* (kbd "E")
+;            "exec xterm -fg yellow -e emacs -nw
+;            /home/pat/math/notes & sleep 1s && transset-df .7 -a")
+(define-key *top-map* (kbd "H-E") "exec xterm -e emacs -nw /home/pat/org/tasks.org")
+;
+;(define-key  *top-map* (kbd "H-o") "fnext")
+;(define-key  *top-map* (kbd "Menu-o") "fnext")
+;;;Fullscreen and hopefully exit
+(define-key *top-map* (kbd "M-RET") "fullscreen")
+;;(define-key *top-map* (kbd "M-q") nil) ;;don't know what this is was with example
+;;;;;;sleepy falling asleep at keyboard test you tube
+;(define-key *top-map* (kbd "M-q") "exec xterm -e conkeror -f unfocus")
+;
+;
+;;ProjectM test
+(define-key *top-map* (kbd "H-P") "exec projectM-pulseaudio")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                                                                    !!!!!!!!!!!
+;;change switch frame message                                        !TEST AREA!
+;(defun my-rad-fn (to-frame from-frame)                              !!!!!!!!!!!
+;  (stumpwm:message "Mustard!"))
+;
+;;(stumpwm:add-hook stumpwm:*focus-frame-hook* 'my-rad-fn)
+;;; only added a message, not ermoved current fame messeg
+
+(defcommand conkeror-unfocus () ()
+  "unfocus conkeror"
+  (run-commands "exec conkeror -f unfocus"))
+(define-key *top-map* (kbd "M-u") "conkeror-unfocus")
+
+(defcommand xterm () ()
+  "run an xterm session or switch to an already running session"
+  (run-or-raise "xterm" '(:instance "xterm")))
+
+(defcommand ip () ()
+  (xterm)
+  (window-send-string "ip link")
+  (send-meta-key (current-screen) (kbd "RET")))
+  ;(window-send-string "iwconfig")
+  ;(send-meta-key (current-screen) (kbd "RET")))
+
+(defcommand emms () ()
+  (emacs)
+  (send-meta-key (current-screen) (kbd "M-x"))
+  (window-send-string "emms")
+  (send-meta-key (current-screen) (kbd "RET")))
+
+(defcommand up () ()
+  (emacs)
+  (send-meta-key (current-screen) (kbd "M-x"))
+  (window-send-string "emms-volume-raise")
+  (send-meta-key (current-screen) (kbd "RET")))
+
+(defcommand down () ()
+  (emacs)
+  (send-meta-key (current-screen) (kbd "M-x"))
+  (window-send-string "emms-volume-lower")
+  (send-meta-key (current-screen) (kbd "RET")))
+
+(defcommand agenda () ()
+  (emacs)
+  (send-meta-key (current-screen) (kbd "M-x"))
+  (window-send-string "org-agenda")
+  (send-meta-key (current-screen) (kbd "RET")))
+
+(defcommand hello () ()
+  (emacs)
+  (send-meta-key (current-screen) (kbd "M-x"))
+  (window-send-string "shell")
+  (send-meta-key (current-screen) (kbd "RET")))
+
+(defcommand calendar () ()
+  (emacs)
+  (send-meta-key (current-screen) (kbd "M-x"))
+  (window-send-string "calendar")
+  (send-meta-key (current-screen) (kbd "RET")))
+
+;; from simiasp
+(defun shift-windows-forward (frames win)
+  (when frames
+    (let ((frame (car frames)))
+      (shift-windows-forward (cdr frames)
+                             (frame-window frame))
+      (when win
+        (pull-window win frame)))))
+
+(defcommand rotate-windows () ()
+  (let* ((frames (group-frames (current-group)))
+         (win (frame-window (car (last frames)))))
+    (shift-windows-forward frames win)))
+
+;; from simias
+(defcommand toggle-split () ()
+  (let* ((group (current-group))
+         (cur-frame (tile-group-current-frame group))
+         (frames (group-frames group)))
+    (if (eq (length frames) 2)
+        (progn (if (or (neighbour :left cur-frame frames)
+                       (neighbour :right cur-frame frames))
+                   (progn
+                     (only)
+                     (vsplit))
+                 (progn
+                   (only)
+                   (hsplit))))
+      (message "Works only with 2 frames"))))
+(define-key *top-map* (kbd "M-.") "toggle-split")
+
+;; Key Bindings
+(define-key *top-map* (kbd "s-Left") "exec xdotool key control+alt+F6")
+(define-key *top-map* (kbd "s-Right") "exec xdotool key control+alt+F2")
+(define-key *root-map* (kbd "~") "rotate-windows")
+(define-key *top-map* (kbd "M-/") "rotate-windows")
+                   
+
+
+;;** Commands
+
+(defparameter *start-menu*
+  '(
+    ("Background"
+     ("black"        "hsetroot -solid '#000000'")
+     ("white"        "hsetroot -solid '#ffffff'")
+     ("chocolate"    "hsetroot -solid '#d2691e'") 
+     ("maroon"       "hsetroot -solid '#b03060'")
+     ("Gray"         "hsetroot -solid '#121212'"))
+
+    ("Transparency"
+     ("kill"      "killall xcompmgr")
+     ("Effect 1"  "killall xcompmgr & sleep 1s && xcompmgr -cfF -r 25 & sleep 1s && hsetroot -solid '#121212'")
+     ("Effect 2"  "killall xcompmgr & sleep 1s && xcompmgr -cfF -r 25 -I .06"))
+
+    ("Office"
+     ("Emacs"  "emacs"))
+
+    ("Keymaps"
+     ("Alt_L<->Control_L"      "xmodmap ~/.keys/switch1")
+     ("Super_L<->Alt_L"      "xmodmap ~/.keys/switch2")
+     ("Mixer"         "xterm -rv -e alsamixer"))
+
+    ("System Tools"
+     ("htop"        "htop")
+     ("top"         "top")
+     ("File Manager"      "nautilus")  ; thunar
+     ("Nvidia X Server"   "nvidia-settings")
+     ("Power Preferences" "gnome-power-preferences")
+     ("Printers"          "system-config-printer")
+     ("Terminal Server"   "tsclient")
+         ; Turn on "Enable window manager's key bindings" for prefix key to
+         ; be passed seamlessly (when *not* in full screen).
+         ; Toggle between full screen and not full screen using
+         ; `Ctrl-Alt-Enter'.
+
+     ;; > In the case of Rdesktop you have to launch the app with the option
+     ;; > '-K' so Stump can retain control over the key combinations that you
+     ;; > input inside the remote session.
+
+     ("VirtualBox"       "VirtualBox"))
+
+    ("X Windows Tools"
+     ("Clipboard"  "xclipboard")
+     ("Fonts"      "xfontsel")
+     ("Ruler"      "kruler")
+     ("Events"     "xev"))
+    ))
+
+(defcommand menu () ()
+  "docstring"
+  (labels ((pick (options)
+                 (let ((selection (stumpwm::select-from-menu
+                                   (current-screen) options)))
+;;                                   (current-screen) options "Main Menu")))
+                   (cond
+                    ((null selection)
+                     (throw 'stumpwm::error "Abort."))
+                    ((stringp (second selection))
+                     (second selection))
+                    (t
+                     (pick (cdr selection)))))))
+    (let ((choice (pick *start-menu*)))
+      (run-shell-command choice))))
+
+(define-key *top-map* (kbd "H-.") "menu")
+
+
+;(defcommand reinit () ()
+;  "docstring"
+;  (run-commands "reload" "loadrc"))
+
+;; (defun transparent-xwin (xwin)
+;;   (xlib:change-property ;;                         :_NET_WM_WINDOW_OPACITY
+;;                         '(7080218880)                         
+;; ;                        '(4080218880)
+;; ;                        '(3865470464)
+;;                         :CARDINAL
+;;                         32))
+
+;; (defun make-window-transparent (window)
+;;   (transparent-xwin (window-parent window)))
+
+;;  (add-hook *new-window-hook* 'make-window-transparent)
+
+;; ;;; make all ui elements transparent
+;; (dolist (s *screen-list*)
+;;   (transparent-xwin (screen-message-window s))
+;;   (transparent-xwin (screen-input-window s))
+;; ;  (transparent-xwin (screen-key-window s))
+;; ;  (transparent-xwin (screen-focus-window s))
+;; ;  (transparent-xwin (screen-frame-window s))
+;;   (dolist (h (screen-heads s))
+;;     (when (not (null (head-mode-line h)))
+;;       (transparent-xwin (mode-line-window (head-mode-line h))))))
+
+;; (run-shell-command "xcompmgr -fFc")
+
+;;; from tycho
+;; Window swapping tool
+(defvar *swapping-window* nil
+  "What window we're swapping out.  Do not customize by hand!")
+(defvar *swapping-window-frame* nil
+  "What frame we're swapping to.  Do not customize by hand!")
+
+(defcommand swap-window () ()
+  "Run first on one window and then the next to swap the two windows"
+  (if *swapping-window*
+      (let ((this-current-window (current-window)))
+        (pull-window *swapping-window*)
+        (setf *swapping-window* nil)
+        (if *swapping-window-frame*
+            (pull-window this-current-window *swapping-window-frame*)
+            (setf *swapping-window-frame nil))
+        (echo "Swapped!"))
+      (progn
+        (setf *swapping-window* (current-window))
+        (setf *swapping-window-frame* (window-frame (current-window)))
+        (echo "Window marked for swapping."))))
+
+(defparameter *focus-frame-skip-list* '())
+
+(defun focus-frame-after (group frames)
+  "Given a list of frames focus the next one in the list after
+the current frame, except for those in *focus-frame-skip-list*."
+  (let ((next-frame (tile-group-current-frame group)))
+    (do ((rest (cdr (member next-frame frames :test 'eq))
+               (cdr (member next-frame frames :test 'eq)))
+         (frames-left (length frames) (1- frames-left)))
+        (nil)
+      (setf next-frame (if rest (car rest) (car frames)))
+      (unless (member next-frame *focus-frame-skip-list*)
+        (return))
+      (when (= frames-left 0) ; stop inifinite cycle
+        (setf next-frame nil)
+        (return)))
+    (when next-frame
+      (focus-frame group next-frame))))
+
+(defun focus-skip-current-frame (group)
+  (push (tile-group-current-frame group) *focus-frame-skip-list*))
+
+(defun focus-unskip-current-frame (group)
+  (setf *focus-frame-skip-list* (remove (tile-group-current-frame group)
+  *focus-frame-skip-list*)))
+
+(defcommand (fskip tile-group) () ()
+            "Put the current frame into the fnext/fprev skip list."
+            (focus-skip-current-frame (current-group)))
+
+(defcommand (funskip tile-group) () ()
+            "Take the current frame out of the fnext/fprev skip list."
+            (focus-unskip-current-frame (current-group)))
